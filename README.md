@@ -18,3 +18,6 @@ curl http://localhost:9096/token\?grant_type\=client_credentials\&client_id\=25e
 curl http://localhost:9096/protected\?access_token\=PXK95V2MPVKPRCVYVPLY-Q
 Hello, I'm protected!
 ```
+
+
+[Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)

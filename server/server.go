@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-session/session"
+	"github.com/lianyz/oauth2-demo/utils"
 	"path/filepath"
 
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -121,6 +122,8 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 			r.ParseForm()
 		}
 
+		logHandler("user authorize", "returnUri: %v", r.Form)
+
 		store.Set("ReturnUri", r.Form)
 		store.Save()
 
@@ -129,6 +132,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		return
 	}
 
+	logHandler("user authorize", "uid: %v", uid)
 	userID = uid.(string)
 	store.Delete("LoggedInUserID")
 	store.Save()
@@ -136,7 +140,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 }
 
 func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	logRequest("login", r.URL)
+	utils.LogRequest("login", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -155,7 +159,7 @@ func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func checkLogin(w http.ResponseWriter, r *http.Request, store session.Store) {
-	logRequest("checkLogin", r.URL)
+	utils.LogRequest("checkLogin", r.URL)
 	if r.Form == nil {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -171,7 +175,7 @@ func checkLogin(w http.ResponseWriter, r *http.Request, store session.Store) {
 }
 
 func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	logRequest("auth", r.URL)
+	utils.LogRequest("auth", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -192,7 +196,7 @@ func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	logRequest("authorize", r.URL)
+	utils.LogRequest("authorize", r.URL)
 	if dump {
 		dumpRequest(os.Stdout, "authorize", r)
 	}
@@ -208,6 +212,7 @@ func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 		form = v.(url.Values)
 	}
 	r.Form = form
+	logRequestF("authorize", "form(ReturnUri): %v", form)
 
 	store.Delete("ReturnUri")
 	store.Save()
@@ -219,7 +224,7 @@ func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	logRequest("token", r.URL)
+	utils.LogRequest("token", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "token", r)
 	}
@@ -231,7 +236,7 @@ func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func test(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	logRequest("test", r.URL)
+	utils.LogRequest("test", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "test", r)
 	}
@@ -271,7 +276,7 @@ func dumpRequest(writer io.Writer, header string, r *http.Request) error {
 }
 
 func outputHTML(w http.ResponseWriter, r *http.Request, fileName string) {
-	filePath, err := GetRunPath()
+	filePath, err := utils.GetRunPath()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -291,12 +296,7 @@ func logHandler(handler string, format string, a ...any) {
 		fmt.Sprintf(format, a))
 }
 
-func logRequest(req string, url *url.URL) {
-	log.Println("[Request]: " + url.String() + " " + req)
-}
-
-// GetRunPath 获取程序执行目录
-func GetRunPath() (string, error) {
-	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	return path, err
+func logRequestF(req string, format string, a ...any) {
+	log.Println("[Request]: " + req + ". " +
+		fmt.Sprintf(format, a))
 }

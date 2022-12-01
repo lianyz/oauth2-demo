@@ -21,3 +21,35 @@ Hello, I'm protected!
 
 
 [Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
+
+
+
+
+## 授权码
+
+### client向server发送授权请求
+
+```
+/oauth/authorize?client_id=222222
+&code_challenge=Qn3Kywp0OiU4NK_AFzGPlmrcYJDJ13Abj_jdL08Ahg8=
+&code_challenge_method=S256
+&redirect_uri=http://localhost:9094/oauth2
+&response_type=code
+&scope=all
+&state=xyz
+```
+
+### server调用UserAuthorizationHandler处理
+client->server
+/oauth/authorize 如果未设置存储store.LoggedInUserID，则返回302，且在Header中设置Location: /login
+                 否则，跳转至client的http://localhost:9094/oauth2
+/login 登录成功后，设置store.LoggedInUserID为username, 并返回302，且在Header中设置Location: /auth
+/auth 如果未设置存储store.LoggedInUserID，则返回302，且在Header中设置Location: /login
+      否则，显示授权确认的页面，点击授权按钮后，跳转至/oauth/authorize
+
+server->client
+/oauth2?code=MDFHNMFHYZMTZDQ3MC0ZZDFKLWE2NDMTOTHJNWY0ODGXNDHJ&state=xyz
+
+client0>server
+/oauth/token
+

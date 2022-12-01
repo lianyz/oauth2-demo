@@ -12,11 +12,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/lianyz/oauth2-demo/utils"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"io"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 )
 
@@ -48,19 +50,33 @@ func main() {
 	http.HandleFunc("/try", tryHandler)
 	http.HandleFunc("/pwd", pwdHandler)
 	http.HandleFunc("/client", clientHandler)
+	http.HandleFunc("/favicon.ico", faviconHandler)
 
 	log.Printf("Client is running at :%s port. Please open http://localhost:%s", port, port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func challengeHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("challenge", r.URL)
+
 	url := config.AuthCodeURL(stateCode,
 		oauth2.SetAuthURLParam("code_challenge", genCodeChallengeS256(challengeCode)),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"))
+	log.Printf("AuthCodeURL: %v", url)
+
+	// 向Authorization Server发送请求
+	// /oauth/authorize?client_id=222222
+	// &code_challenge=Qn3Kywp0OiU4NK_AFzGPlmrcYJDJ13Abj_jdL08Ahg8=
+	// &code_challenge_method=S256
+	// &redirect_uri=http://localhost:9094/oauth2
+	// &response_type=code
+	// &scope=all
+	// &state=xyz
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func tokenHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("token", r.URL)
 	r.ParseForm()
 	state := r.Form.Get("state")
 	if state != stateCode {
@@ -83,6 +99,7 @@ func tokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func refreshHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("refresh", r.URL)
 	if globalToken == nil {
 		redirectToChallenge(w, r)
 		return
@@ -100,6 +117,7 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tryHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("try", r.URL)
 	if globalToken == nil {
 		redirectToChallenge(w, r)
 		return
@@ -116,6 +134,7 @@ func tryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pwdHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("pwd", r.URL)
 	token, err := config.PasswordCredentialsToken(context.Background(), "test", "test")
 	if err != nil {
 		internalServerError(w, err.Error())
@@ -127,6 +146,7 @@ func pwdHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("client", r.URL)
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -140,6 +160,15 @@ func clientHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encodeToken(w, token)
+}
+
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	filePath, err := utils.GetRunPath()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	fullFileName := filepath.Join(filePath, "favicon.ico")
+	http.ServeFile(w, r, fullFileName)
 }
 
 func redirectToChallenge(w http.ResponseWriter, r *http.Request) {

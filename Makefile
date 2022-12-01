@@ -15,9 +15,12 @@ build:
 	@echo "building client..."
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./client
 
+	@echo "copy static files..."
+	mkdir -p bin/amd64/static
+	cp ./server/static/*.html ./bin/amd64/static/
 .PHONY: run
 run:
-	./bin/amd64/server
+	./bin/amd64/server -d false
 
 .PHONY: run.client
 run.client:

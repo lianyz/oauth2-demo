@@ -5,14 +5,14 @@ all: build
 
 .PHONY: build
 build:
-	echo "building resource server..."
+	@echo "building resource server..."
 	mkdir -p bin/amd64
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./resource-server
 
-	echo "building server..."
+	@echo "building server..."
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./server
 
-	echo "building client..."
+	@echo "building client..."
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./client
 
 .PHONY: run

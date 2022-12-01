@@ -15,6 +15,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -23,6 +24,7 @@ const (
 	authServerURL = "http://localhost:9096"
 	stateCode     = "xyz"
 	challengeCode = "s256example"
+	port          = "9094"
 )
 
 var (
@@ -46,6 +48,9 @@ func main() {
 	http.HandleFunc("/try", tryHandler)
 	http.HandleFunc("/pwd", pwdHandler)
 	http.HandleFunc("/client", clientHandler)
+
+	log.Printf("Client is running at :%s port. Please open http://localhost:%s", port, port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func challengeHandler(w http.ResponseWriter, r *http.Request) {

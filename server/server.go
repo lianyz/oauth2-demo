@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-session/session"
+	"path/filepath"
 
 	"github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/go-oauth2/oauth2/v4/generates"
@@ -40,7 +41,7 @@ var (
 func init() {
 	flag.BoolVar(&dump, "d", true, "Dump requests and responses")
 	flag.StringVar(&id, "i", "222222", "The client id being passed in")
-	flag.StringVar(&secret, "s", "333333", "The client secret being passed in")
+	flag.StringVar(&secret, "s", "22222222", "The client secret being passed in")
 	flag.StringVar(&domain, "r", "http://localhost:9094", "The domain of the redirect url")
 	flag.IntVar(&port, "p", 9096, "the base port for the server")
 }
@@ -96,6 +97,7 @@ func main() {
 }
 
 func passwordAuthorizeHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
+	logHandler("password authorize", "username:%s password:%s", username, password)
 	if username == "test" && password == "test" {
 		userID = "test"
 	}
@@ -103,6 +105,7 @@ func passwordAuthorizeHandler(ctx context.Context, clientID, username, password 
 }
 
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	logHandler("user authorize", "userid: %s", userID)
 	if dump {
 		_ = dumpRequest(os.Stdout, "userAuthorizeHandler", r)
 	}
@@ -133,6 +136,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 }
 
 func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	logRequest("login", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -151,6 +155,7 @@ func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func checkLogin(w http.ResponseWriter, r *http.Request, store session.Store) {
+	logRequest("checkLogin", r.URL)
 	if r.Form == nil {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -166,6 +171,7 @@ func checkLogin(w http.ResponseWriter, r *http.Request, store session.Store) {
 }
 
 func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	logRequest("auth", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -186,6 +192,7 @@ func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	logRequest("authorize", r.URL)
 	if dump {
 		dumpRequest(os.Stdout, "authorize", r)
 	}
@@ -212,6 +219,7 @@ func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	logRequest("token", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "token", r)
 	}
@@ -223,6 +231,7 @@ func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func test(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	logRequest("test", r.URL)
 	if dump {
 		_ = dumpRequest(os.Stdout, "test", r)
 	}
@@ -262,7 +271,12 @@ func dumpRequest(writer io.Writer, header string, r *http.Request) error {
 }
 
 func outputHTML(w http.ResponseWriter, r *http.Request, fileName string) {
-	file, err := os.Open(fileName)
+	filePath, err := GetRunPath()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	fullFileName := filepath.Join(filePath, fileName)
+	file, err := os.Open(fullFileName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -270,4 +284,19 @@ func outputHTML(w http.ResponseWriter, r *http.Request, fileName string) {
 	defer file.Close()
 	fi, _ := file.Stat()
 	http.ServeContent(w, r, file.Name(), fi.ModTime(), file)
+}
+
+func logHandler(handler string, format string, a ...any) {
+	log.Println("[Handler]: " + handler + ". " +
+		fmt.Sprintf(format, a))
+}
+
+func logRequest(req string, url *url.URL) {
+	log.Println("[Request]: " + url.String() + " " + req)
+}
+
+// GetRunPath 获取程序执行目录
+func GetRunPath() (string, error) {
+	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	return path, err
 }

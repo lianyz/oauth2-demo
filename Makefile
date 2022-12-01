@@ -20,7 +20,7 @@ build:
 	cp ./server/static/*.html ./bin/amd64/static/
 .PHONY: run
 run:
-	./bin/amd64/server -d false
+	./bin/amd64/server -d=false
 
 .PHONY: run.client
 run.client:

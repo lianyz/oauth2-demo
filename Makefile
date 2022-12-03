@@ -22,12 +22,10 @@ CLIENT_ADDR = 127.0.0.1
 
 .PHONY: run
 run: build
-	clear
 	./bin/amd64/server -d=false -ip=$(SERVER_ADDR)
 
 .PHONY: run.client
 run.client:
-	clear
 	curl "http://$(SERVER_ADDR):9096/register?clientId=CLIENT_12345&clientSecret=CLIENT_xxxxx&clientAddr=http://$(CLIENT_ADDR):9094"
 	./bin/amd64/client -id CLIENT_12345 -secret CLIENT_xxxxx -addr http://$(CLIENT_ADDR):9094 -server http://$(SERVER_ADDR):9096
 

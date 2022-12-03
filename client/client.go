@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/lianyz/oauth2-demo/utils"
 	"golang.org/x/oauth2"
@@ -30,20 +31,23 @@ const (
 )
 
 var (
-	config = oauth2.Config{
-		ClientID:     "222222",
-		ClientSecret: "22222222",
-		Scopes:       []string{"all"},
-		RedirectURL:  "http://localhost:9094/oauth2",
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  authServerURL + "/oauth/authorize",
-			TokenURL: authServerURL + "/oauth/token",
-		},
-	}
-	globalToken *oauth2.Token // Non-concurrent security
+	clientId     string
+	clientSecret string
+	clientAddr   string
+	config       *oauth2.Config
+	globalToken  *oauth2.Token // Non-concurrent security
 )
 
+func init() {
+	flag.StringVar(&clientId, "id", "123456", "client id")
+	flag.StringVar(&clientSecret, "secret", "111111", "client secret")
+	flag.StringVar(&clientAddr, "addr", "http://localhost:9094", "client addr")
+}
+
 func main() {
+
+	initConfig()
+
 	http.HandleFunc("/", defaultHandler)
 	http.HandleFunc("/oauth2", tokenHandler)
 	http.HandleFunc("/refresh", refreshHandler)
@@ -54,6 +58,22 @@ func main() {
 
 	log.Printf("Client is running at :%s port. Please open http://localhost:%s", port, port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+func initConfig() {
+	flag.Parse()
+	config = &oauth2.Config{
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		Scopes:       []string{"all"},
+		RedirectURL:  clientAddr + "/oauth2",
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  authServerURL + "/oauth/authorize",
+			TokenURL: authServerURL + "/oauth/token",
+		},
+	}
+
+	fmt.Printf("ClientId: %s ClientSecret: %s ClientAddr: %s\n", clientId, clientSecret, clientAddr)
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {

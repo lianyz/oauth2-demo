@@ -20,8 +20,8 @@ Hello, I'm protected!
 ```
 
 
-[Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
-
+* [Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
+* [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2/tree/master/example)
 
 
 

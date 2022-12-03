@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-session/session"
+	"github.com/google/uuid"
 	"github.com/lianyz/oauth2-demo/utils"
 	"path/filepath"
 
@@ -32,18 +33,12 @@ import (
 )
 
 var (
-	dump   bool
-	id     string
-	secret string
-	domain string
-	port   int
+	dump bool
+	port int
 )
 
 func init() {
 	flag.BoolVar(&dump, "d", true, "Dump requests and responses")
-	flag.StringVar(&id, "i", "222222", "The client id being passed in")
-	flag.StringVar(&secret, "s", "22222222", "The client secret being passed in")
-	flag.StringVar(&domain, "r", "http://localhost:9094", "The domain of the redirect url")
 	flag.IntVar(&port, "p", 9096, "the base port for the server")
 }
 
@@ -62,12 +57,6 @@ func main() {
 	clientStore := store.NewClientStore()
 	manager.MapClientStorage(clientStore)
 
-	clientStore.Set(id, &models.Client{
-		ID:     id,
-		Secret: secret,
-		Domain: domain,
-	})
-
 	srv := server.NewServer(server.NewConfig(), manager)
 
 	srv.SetPasswordAuthorizationHandler(passwordAuthorizeHandler)
@@ -80,6 +69,10 @@ func main() {
 
 	srv.SetResponseErrorHandler(func(res *errors.Response) {
 		log.Println("Response Error:", res.Error.Error())
+	})
+
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		register(w, r, clientStore)
 	})
 
 	addHandler("/login", login, nil)
@@ -138,6 +131,44 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 	store.Save()
 	utils.LogHandlerF("userAuthorize", "userid: %s, Delete store.LoggedInUserID", userID)
 	return
+}
+
+// register 注册客户端
+func register(w http.ResponseWriter, r *http.Request, clientStore *store.ClientStore) {
+	utils.LogRequest("register", r)
+	if dump {
+		_ = dumpRequest(os.Stdout, "register", r)
+	}
+
+	params := r.URL.Query()
+	clientId := params.Get("clientId")
+	clientSecret := params.Get("clientSecret")
+	clientAddr := params.Get("clientAddr")
+
+	if clientId == "" {
+		clientId = uuid.New().String()[:8]
+	}
+	if clientSecret == "" {
+		clientSecret = uuid.New().String()[:8]
+	}
+	if clientAddr == "" {
+		w.Write([]byte("param client addr is null!\n"))
+		return
+	}
+	err := clientStore.Set(clientId, &models.Client{
+		ID:     clientId,
+		Secret: clientSecret,
+		Domain: clientAddr,
+	})
+	if err != nil {
+		log.Printf("set clientStore error: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"CLIENT_ID":     clientId,
+		"CLIENT_SECRET": clientSecret,
+	})
 }
 
 func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {

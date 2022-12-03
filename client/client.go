@@ -174,7 +174,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	var tokenReview authentication.TokenReview
 	err := decoder.Decode(&tokenReview)
 	if err != nil {
-		log.Println("[Error]", err.Error())
+		log.Println("[Error] Decode", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusBadRequest)
 
 		return
@@ -183,18 +183,18 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	res, err := http.Get(fmt.Sprintf("%s/test?access_token=%s",
 		authServerURL, tokenReview.Spec.Token))
 	if err != nil {
-		log.Println("[Error]", err.Error())
+		log.Println("[Error] authorize", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
 
 		return
 	}
 	defer res.Body.Close()
 
-	decoder = json.NewDecoder(r.Body)
+	decoder = json.NewDecoder(res.Body)
 	var user userInfo
 	err = decoder.Decode(&user)
 	if err != nil {
-		log.Println("[Error]", err.Error())
+		log.Println("[Error] Parse User Info ", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
 
 		return

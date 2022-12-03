@@ -34,11 +34,13 @@ import (
 
 var (
 	dump bool
+	ip   string
 	port int
 )
 
 func init() {
 	flag.BoolVar(&dump, "d", true, "Dump requests and responses")
+	flag.StringVar(&ip, "ip", "localhost", "the ip for the server")
 	flag.IntVar(&port, "p", 9096, "the base port for the server")
 }
 
@@ -81,12 +83,12 @@ func main() {
 	addHandler("/oauth/token", token, srv)
 	addHandler("/test", test, srv)
 
-	endpoint := fmt.Sprintf("%s:%d", "http://localhost", port)
+	endpoint := fmt.Sprintf("http://%s:%d", ip, port)
 	log.Printf("Server is running at %d port.\n", port)
 	log.Printf("Point your OAuth client Auth endpoint to %s%s", endpoint, "/oauth/authorize")
 	log.Printf("Point your OAuth client Token endpoint to %s%s", endpoint, "/oauth/token")
 
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf("%s:%d", ip, port)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 

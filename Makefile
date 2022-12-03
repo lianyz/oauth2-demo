@@ -16,13 +16,15 @@ build:
 	@echo "copy static files..."
 	mkdir -p bin/amd64/static
 	cp ./server/static/*.html ./bin/amd64/static/
+
+SERVER_ADDR = 127.0.0.1
+CLIENT_ADDR = 127.0.0.1
+
 .PHONY: run
 run: build
 	clear
-	./bin/amd64/server -d=false
+	./bin/amd64/server -d=false -ip=$(SERVER_ADDR)
 
-SERVER_ADDR = localhost
-CLIENT_ADDR = localhost
 .PHONY: run.client
 run.client:
 	clear

@@ -10,11 +10,92 @@
 ### 2. 运行服务端
 
 ```
-
+# make run
+mkdir -p bin/amd64
+building server...
+CGO_ENABLED=0 GOARCH=amd64 go build -o bin/amd64 ./server
+building client...
+CGO_ENABLED=0 GOARCH=amd64 go build -o bin/amd64 ./client
+copy static files...
+mkdir -p bin/amd64/static
+cp ./server/static/*.html ./bin/amd64/static/
+./bin/amd64/server -d=false -ip=192.168.34.2
+2022/12/04 00:31:58 Server is running at 9096 port.
+2022/12/04 00:31:58 Point your OAuth client Auth endpoint to http://192.168.34.2:9096/oauth/authorize
+2022/12/04 00:31:58 Point your OAuth client Token endpoint to http://192.168.34.2:9096/oauth/token
 ```
 
+### 3. 运行客户端
 
+```
+# make run.client
+curl "http://192.168.34.2:9096/register?clientId=CLIENT_12345&clientSecret=CLIENT_xxxxx&clientAddr=http://192.168.34.2:9094"
+{"CLIENT_ID":"CLIENT_12345","CLIENT_SECRET":"CLIENT_xxxxx"}
+./bin/amd64/client -id CLIENT_12345 -secret CLIENT_xxxxx -addr http://192.168.34.2:9094 -server http://192.168.34.2:9096
+ClientId: CLIENT_12345 ClientSecret: CLIENT_xxxxx ClientAddr: http://192.168.34.2:9094
+2022/12/04 00:33:01 Client is running at http://192.168.34.2:9094. Please open http://192.168.34.2:9094
+```
 
+### 4. 在浏览器中访问http://192.168.34.2:9094
+
+在页面中输入用户名密码, 点击同意授权按钮，成功后，浏览器显示如下内容
+```
+{
+  "access_token": "OWFLNZEXNGETMJUXNY0ZMZE2LWI1NJYTYMEWNJQZNZAWM2JJ",
+  "token_type": "Bearer",
+  "refresh_token": "NWRHMZA3ZTGTZJVLMC01NWVLLWEZZTATMJUZYJDHMWIYMDJI",
+  "expiry": "2022-12-04T02:34:09.473358159+08:00"
+}
+```
+
+### 5. 将$(access_token) 拷贝至配置文件
+```
+# echo " OWFLNZEXNGETMJUXNY0ZMZE2LWI1NJYTYMEWNJQZNZAWM2JJ" >> ./webhook-config/config
+```
+
+### 6. 备份并修改k8s的配置文件
+```
+# make install.webhook
+add token to webhook-config/config under oauth2-user
+cp ~/.kube/config ~/.kube/config.bak
+cp ./webhook-config/config ~/.kube/
+cp /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml.bak
+cp ./webhook-config/kube-apiserver.yaml /etc/kubernetes/manifests/
+cp /etc/config/webhook-config.json /etc/config/webhook-config.json.bak
+cp ./webhook-config/webhook-config.json /etc/config/
+```
+
+### 7. 等待并查看k8s ApiServer是否重启成功
+
+```
+k get po
+The connection to the server 192.168.34.2:6443 was refused - did you specify the right host or port?
+
+...
+
+k get po
+NAME                          READY   STATUS      RESTARTS        AGE
+centos-578b69b65f-jl9ww       0/1     Running     27 (3d5h ago)   90d
+config-volume-pod             0/1     Completed   0               90d
+envoy-6958c489d9-hmj7n        1/1     Running     24 (3d5h ago)   86d
+hello-volume                  1/1     Running     27 (3d5h ago)   90d
+hostnames-7fb5498f8d-bkwvt    1/1     Running     24 (3d5h ago)   54d
+hostnames-7fb5498f8d-sb4ql    1/1     Running     24 (3d5h ago)   54d
+hostnames-7fb5498f8d-sr9kt    1/1     Running     25 (3d5h ago)   54d
+myapp-pod                     1/1     Running     105 (13m ago)   56d
+nginx                         2/2     Running     49 (3d5h ago)   61d
+patch-demo-68fc587f7c-5zlvw   1/1     Running     106 (12m ago)   56d
+patch-demo-68fc587f7c-mjlt8   1/1     Running     106 (10m ago)   56d
+```
+
+### 8. 使用config中配置的oauth2-user用户访问k8s
+
+```
+k get po --user oauth2-user
+Error from server (Forbidden): pods is forbidden: User "lianyanze" cannot list resource "pods" in API group "" in the namespace "default"
+```
+
+用户获取成功，但没有权限
 
 * [Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
 * [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2/tree/master/example)

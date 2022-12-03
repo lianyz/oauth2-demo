@@ -16,8 +16,6 @@ import (
 	"github.com/lianyz/oauth2-demo/utils"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -28,9 +26,9 @@ import (
 )
 
 type userInfo struct {
-	clientId  string `json:"client_id"`
-	expiresIn int    `json:"expires_in"`
-	userId    string `json:"user_id"`
+	ClientId  string `json:"client_id,omitempty"`
+	ExpiresIn int64  `json:"expires_in,omitempty"`
+	UserId    string `json:"user_id,omitempty"`
 }
 
 const (
@@ -164,7 +162,30 @@ func tryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer res.Body.Close()
-	io.Copy(w, res.Body)
+
+	//body, err := ioutil.ReadAll(res.Body)
+	//str := string(body)
+	//log.Printf("Body Content: %s", str)
+	//
+	//user := userInfo{}
+	//json.Unmarshal([]byte(str), &user)
+
+	user := userInfo{}
+	err = json.NewDecoder(res.Body).Decode(&user)
+	if err != nil {
+		log.Println("[Error] Parse User Info ", err.Error())
+		badRequestError(w, err.Error())
+
+		return
+	}
+
+	log.Printf("User: %v", user)
+
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	encoder.Encode(user)
+
+	//io.Copy(w, res.Body)
 }
 
 // webhookHandler serve as k8s authentication webhook
@@ -191,18 +212,14 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	// 两种定义方式都可以，一个是指针，一个是变量
+	// *** 注意，userInfo内的字段首字母必须大写，否则无法正确解析出JSON数据 ***
+	//user := userInfo{}
+	//err = json.NewDecoder(res.Body).Decode(&user)
+
+	user := new(userInfo)
+	err = json.NewDecoder(res.Body).Decode(user)
 	if err != nil {
-		log.Println("[Error] Parse response failed ", err.Error())
-		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
-
-		return
-	}
-
-	log.Println(body)
-
-	var user userInfo
-	if err := json.Unmarshal(body, &user); err != nil {
 		log.Println("[Error] Parse User Info ", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
 
@@ -211,19 +228,6 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[Success] login as %v", user)
 	writeTokenReviewStatusOK(w, user)
-
-	//decoder = json.NewDecoder(res.Body)
-	//user := userInfo{}
-	//err = decoder.Decode(&user)
-	//if err != nil {
-	//	log.Println("[Error] Parse User Info ", err.Error())
-	//	writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
-	//
-	//	return
-	//}
-	//
-	//log.Printf("[Success] login as %v", user)
-	//writeTokenReviewStatusOK(w, user)
 }
 
 func pwdHandler(w http.ResponseWriter, r *http.Request) {
@@ -293,13 +297,13 @@ func writeTokenReviewStatusFailed(w http.ResponseWriter, statusCode int) {
 	})
 }
 
-func writeTokenReviewStatusOK(w http.ResponseWriter, user userInfo) {
+func writeTokenReviewStatusOK(w http.ResponseWriter, user *userInfo) {
 	w.WriteHeader(http.StatusOK)
 	tokenReviewStatus := authentication.TokenReviewStatus{
 		Authenticated: true,
 		User: authentication.UserInfo{
-			Username: user.userId,
-			UID:      user.userId,
+			Username: user.UserId,
+			UID:      user.UserId,
 		},
 	}
 	json.NewEncoder(w).Encode(map[string]interface{}{

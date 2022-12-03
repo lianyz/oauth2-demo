@@ -32,24 +32,25 @@ type userInfo struct {
 }
 
 const (
-	authServerURL = "http://localhost:9096"
 	state         = "xyz"
 	challengeCode = "s256example"
 	port          = "9094"
 )
 
 var (
-	clientId     string
-	clientSecret string
-	clientAddr   string
-	config       *oauth2.Config
-	globalToken  *oauth2.Token // Non-concurrent security
+	authServerURL string
+	clientId      string
+	clientSecret  string
+	clientAddr    string
+	config        *oauth2.Config
+	globalToken   *oauth2.Token // Non-concurrent security
 )
 
 func init() {
 	flag.StringVar(&clientId, "id", "123456", "client id")
 	flag.StringVar(&clientSecret, "secret", "111111", "client secret")
 	flag.StringVar(&clientAddr, "addr", "http://localhost:9094", "client addr")
+	flag.StringVar(&authServerURL, "server", "http://localhost:9096", "auth server addr")
 }
 
 func main() {

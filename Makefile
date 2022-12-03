@@ -25,7 +25,7 @@ run: build
 run.client:
 	clear
 	curl "http://localhost:9096/register?clientId=CLIENT_12345&clientSecret=CLIENT_xxxxx&clientAddr=http://localhost:9094"
-	./bin/amd64/client -id CLIENT_12345 -secret CLIENT_xxxxx -addr http://localhost:9094
+	./bin/amd64/client -id CLIENT_12345 -secret CLIENT_xxxxx -addr http://localhost:9094 -server http://localhost:9094
 
 .PHONY: install.webhook
 install.webhook:

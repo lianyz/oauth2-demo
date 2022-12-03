@@ -8,10 +8,10 @@ build:
 	mkdir -p bin/amd64
 
 	@echo "building server..."
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./server
+	CGO_ENABLED=0 GOARCH=amd64 go build -o bin/amd64 ./server
 
 	@echo "building client..."
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/amd64 ./client
+	CGO_ENABLED=0 GOARCH=amd64 go build -o bin/amd64 ./client
 
 	@echo "copy static files..."
 	mkdir -p bin/amd64/static

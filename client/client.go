@@ -21,7 +21,15 @@ import (
 	"net/http"
 	"path/filepath"
 	"time"
+
+	authentication "k8s.io/api/authentication/v1beta1"
 )
+
+type userInfo struct {
+	clientId  string
+	expiresIn int
+	userId    string
+}
 
 const (
 	authServerURL = "http://localhost:9096"
@@ -55,6 +63,8 @@ func main() {
 	http.HandleFunc("/pwd", pwdHandler)
 	http.HandleFunc("/client", clientHandler)
 	http.HandleFunc("/favicon.ico", faviconHandler)
+
+	http.HandleFunc("/k8s-authn-webhook", webhookHandler)
 
 	log.Printf("Client is running at :%s port. Please open http://localhost:%s", port, port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
@@ -152,6 +162,44 @@ func tryHandler(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, res.Body)
 }
 
+// webhookHandler serve as k8s authentication webhook
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("webhook", r)
+
+	decoder := json.NewDecoder(r.Body)
+	var tokenReview authentication.TokenReview
+	err := decoder.Decode(&tokenReview)
+	if err != nil {
+		log.Println("[Error]", err.Error())
+		writeTokenReviewStatusFailed(w, http.StatusBadRequest)
+
+		return
+	}
+
+	res, err := http.Get(fmt.Sprintf("%s/test?access_token=%s",
+		authServerURL, tokenReview.Spec.Token))
+	if err != nil {
+		log.Println("[Error]", err.Error())
+		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
+
+		return
+	}
+	defer res.Body.Close()
+
+	decoder = json.NewDecoder(r.Body)
+	var user userInfo
+	err = decoder.Decode(&user)
+	if err != nil {
+		log.Println("[Error]", err.Error())
+		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
+
+		return
+	}
+
+	log.Printf("[Success] login as %v", user)
+	writeTokenReviewStatusOK(w, user)
+}
+
 func pwdHandler(w http.ResponseWriter, r *http.Request) {
 	utils.LogRequest("pwd", r)
 	token, err := config.PasswordCredentialsToken(context.Background(), "test", "test")
@@ -206,6 +254,33 @@ func badRequestError(w http.ResponseWriter, err string) {
 
 func internalServerError(w http.ResponseWriter, err string) {
 	http.Error(w, err, http.StatusInternalServerError)
+}
+
+func writeTokenReviewStatusFailed(w http.ResponseWriter, statusCode int) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"apiVersion": "authentication.k8s.io/v1beta1",
+		"kind":       "TokenReview",
+		"status": authentication.TokenReviewStatus{
+			Authenticated: false,
+		},
+	})
+}
+
+func writeTokenReviewStatusOK(w http.ResponseWriter, user userInfo) {
+	w.WriteHeader(http.StatusOK)
+	tokenReviewStatus := authentication.TokenReviewStatus{
+		Authenticated: true,
+		User: authentication.UserInfo{
+			Username: user.userId,
+			UID:      user.userId,
+		},
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"apiVersion": "authentication.k8s.io/v1beta1",
+		"kind":       "TokenReview",
+		"status":     tokenReviewStatus,
+	})
 }
 
 func encodeToken(w http.ResponseWriter, token *oauth2.Token) {

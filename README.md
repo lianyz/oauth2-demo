@@ -25,28 +25,26 @@ Hello, I'm protected!
 
 
 
-## 授权码
+## OAuth2.0 核心
+OAuth2.0授权的核心是颁发访问令牌、使用访问令牌
 
-### client向server发送授权请求
-
-```
-/oauth/authorize?client_id=222222
-&code_challenge=Qn3Kywp0OiU4NK_AFzGPlmrcYJDJ13Abj_jdL08Ahg8=
-&code_challenge_method=S256
-&redirect_uri=http://localhost:9094/oauth2
-&response_type=code
-&scope=all
-&state=xyz
-```
+## OAuth2.0 四种许可类型
+* 授权码许可（Authorization Code）,是最经典、最完备、最安全、应用最广泛的许可类型
+* 隐式许可（Implicit）
+* 客户端凭证许可（Client Credentials）
+* 资源拥有者凭证许可（Resource Owner Credentials）
 
 
-## OAuth2 访问流程
+## OAuth2.0 授权码许可流程
 
 * 资源拥有者
 * 浏览器代理（代理资源拥有者）
 * 授权客户端（第三方软件）
 * 授权服务端
 * 受保护资源
+
+* 第一步：获取授权码 （授权客户端与授权服务端**间接通信**，中间通过了浏览器代理）
+* 第二步：获取访问令牌（授权客户端与授权服务端**直接通信**）
 
 ### 1. 浏览器代理->授权客户端
 
@@ -78,7 +76,7 @@ http://localhost:9096/oauth/authorize?
 redirect http://localhost:9096/login 302
 ```
 
-### 5. 浏览器代理->授权服务端
+### 5. 浏览器代理->授权服务端，让用户登录
 ```
 http://localhost:9096/login
 ```
@@ -88,12 +86,12 @@ http://localhost:9096/login
 redirect http://localhost:9096/auth 302
 ```
 
-### 7. 浏览器代理->授权服务端
+### 7. 浏览器代理->授权服务端，让用户确认授权
 ```
 http://localhost:9096/auth
 ```
 
-### 8. 浏览器代理->授权服务端
+### 8. 浏览器代理->授权服务端，生成授权码
 ```
 http://localhost:9096/oauth/authorize
 ```
@@ -108,7 +106,7 @@ redirect http://localhost:9094/oauth2?code=NJNMNJFHZGMTNDY4NS0ZYTY2LWIWZGUTYWIXN
 http://localhost:9094/oauth2?code=NJNMNJFHZGMTNDY4NS0ZYTY2LWIWZGUTYWIXNTEYZWU3MJY5&state=xyz
 ```
 
-### 11 授权客户端->授权服务端（直接通信，不通过浏览器）
+### 11 授权客户端->授权服务端（直接通信，不通过浏览器，生成访问令牌）
 ```
 POST http://localhost:9096/oauth/token
      code:NJNMNJFHZGMTNDY4NS0ZYTY2LWIWZGUTYWIXNTEYZWU3MJY5
@@ -123,21 +121,6 @@ POST http://localhost:9096/oauth/token
 "expiry": "2022-12-03T15:40:06.737177+08:00"
 }
 ```
-
-
-### server调用UserAuthorizationHandler处理
-client->server
-/oauth/authorize 如果未设置存储store.LoggedInUserID，则返回302，且在Header中设置Location: /login
-                 否则，跳转至client的http://localhost:9094/oauth2
-/login 登录成功后，设置store.LoggedInUserID为username, 并返回302，且在Header中设置Location: /auth
-/auth 如果未设置存储store.LoggedInUserID，则返回302，且在Header中设置Location: /login
-      否则，显示授权确认的页面，点击授权按钮后，跳转至/oauth/authorize
-
-server->client
-/oauth2?code=MDFHNMFHYZMTZDQ3MC0ZZDFKLWE2NDMTOTHJNWY0ODGXNDHJ&state=xyz
-
-client0>server
-/oauth/token
 
 
 授权服务端执行日志

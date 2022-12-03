@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	authentication "k8s.io/api/authentication/v1beta1"
@@ -67,8 +68,10 @@ func main() {
 
 	http.HandleFunc("/k8s-authn-webhook", webhookHandler)
 
-	log.Printf("Client is running at :%s port. Please open http://localhost:%s", port, port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("Client is running at %s. Please open %s", clientAddr, clientAddr)
+
+	items := strings.Split(clientAddr, ":")
+	log.Fatal(http.ListenAndServe(":"+items[2], nil))
 }
 
 func initConfig() {

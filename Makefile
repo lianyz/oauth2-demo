@@ -21,8 +21,8 @@ run: build
 	clear
 	./bin/amd64/server -d=false
 
-SERVER_ADDR = 127.0.0.1
-CLIENT_ADDR = 127.0.0.1
+SERVER_ADDR = localhost
+CLIENT_ADDR = localhost
 .PHONY: run.client
 run.client:
 	clear

@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -190,10 +191,18 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
-	decoder = json.NewDecoder(res.Body)
-	user := userInfo{}
-	err = decoder.Decode(&user)
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		log.Println("[Error] Parse response failed ", err.Error())
+		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
+
+		return
+	}
+
+	log.Println(body)
+
+	var user userInfo
+	if err := json.Unmarshal(body, &user); err != nil {
 		log.Println("[Error] Parse User Info ", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
 
@@ -202,6 +211,19 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[Success] login as %v", user)
 	writeTokenReviewStatusOK(w, user)
+
+	//decoder = json.NewDecoder(res.Body)
+	//user := userInfo{}
+	//err = decoder.Decode(&user)
+	//if err != nil {
+	//	log.Println("[Error] Parse User Info ", err.Error())
+	//	writeTokenReviewStatusFailed(w, http.StatusUnauthorized)
+	//
+	//	return
+	//}
+	//
+	//log.Printf("[Success] login as %v", user)
+	//writeTokenReviewStatusOK(w, user)
 }
 
 func pwdHandler(w http.ResponseWriter, r *http.Request) {

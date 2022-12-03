@@ -27,9 +27,9 @@ import (
 )
 
 type userInfo struct {
-	clientId  string
-	expiresIn int
-	userId    string
+	clientId  string `json:"client_id"`
+	expiresIn int    `json:"expires_in"`
+	userId    string `json:"user_id"`
 }
 
 const (

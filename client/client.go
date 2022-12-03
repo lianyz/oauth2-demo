@@ -57,12 +57,11 @@ func main() {
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("default", r.URL)
+	utils.LogRequest("/", r)
 
 	url := config.AuthCodeURL(state,
 		oauth2.SetAuthURLParam("code_challenge", genCodeChallengeS256(challengeCode)),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"))
-	utils.LogURL("AuthCodeURL: ", url)
 
 	// 向Authorization Server发送请求
 	// /oauth/authorize?client_id=222222
@@ -76,7 +75,7 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tokenHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("token", r.URL)
+	utils.LogRequest("token", r)
 	r.ParseForm()
 	state := r.Form.Get("state")
 	if state != state {
@@ -94,12 +93,12 @@ func tokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	globalToken = token
-
+	log.Printf("token: %v", token)
 	encodeToken(w, token)
 }
 
 func refreshHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("refresh", r.URL)
+	utils.LogRequest("refresh", r)
 	if globalToken == nil {
 		redirect(w, r, "/")
 		return
@@ -117,7 +116,7 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tryHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("try", r.URL)
+	utils.LogRequest("try", r)
 	if globalToken == nil {
 		redirect(w, r, "/")
 		return
@@ -134,7 +133,7 @@ func tryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pwdHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("pwd", r.URL)
+	utils.LogRequest("pwd", r)
 	token, err := config.PasswordCredentialsToken(context.Background(), "test", "test")
 	if err != nil {
 		internalServerError(w, err.Error())
@@ -146,7 +145,7 @@ func pwdHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("client", r.URL)
+	utils.LogRequest("client", r)
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -172,7 +171,7 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func redirect(w http.ResponseWriter, r *http.Request, url string) {
-	utils.LogRedirect(r.URL.String(), "/login")
+	utils.LogRedirect(r.URL.String(), url)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 

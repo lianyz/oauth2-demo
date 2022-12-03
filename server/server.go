@@ -125,7 +125,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		utils.LogHandlerF("userAuthorize", "r.Form: %v", r.Form)
 
 		store.Set("ReturnUri", r.Form)
-		utils.LogHandlerF("userHandler", "set ReturnUri %v", r.Form)
+		utils.LogHandlerF("userAuthorize", "set store.ReturnUri %v", r.Form)
 		store.Save()
 
 		redirect(w, "userAuthorize", "/login")
@@ -141,6 +141,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 }
 
 func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
+	utils.LogRequest("login", r)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -152,11 +153,10 @@ func login(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 	}
 
 	if r.Method == "POST" {
-		utils.LogRequestF("login", "method: %s url: %s", r.Method, r.URL.String())
 		checkLogin(w, r, store)
 		return
 	}
-	utils.LogRequestF("login", "method: %s url: %s", r.Method, r.URL.String())
+
 	outputHTML(w, r, "static/login.html")
 }
 
@@ -175,7 +175,7 @@ func checkLogin(w http.ResponseWriter, r *http.Request, store session.Store) {
 }
 
 func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	utils.LogRequest("auth", r.URL)
+	utils.LogRequest("auth", r)
 	if dump {
 		_ = dumpRequest(os.Stdout, "auth", r)
 	}
@@ -191,12 +191,11 @@ func auth(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 		return
 	}
 
-	utils.LogRequestF("login", "method: %s url: %s", r.Method, r.URL)
 	outputHTML(w, r, "static/auth.html")
 }
 
 func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	utils.LogRequest("oauth/authorize", r.URL)
+	utils.LogRequest("oauth/authorize", r)
 	if dump {
 		dumpRequest(os.Stdout, "authorize", r)
 	}
@@ -212,7 +211,7 @@ func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 		form = v.(url.Values)
 	}
 	r.Form = form
-	utils.LogRequestF("oauth/authorize", "Get store.ReturnUri: %v and Delete store.ReturnUri", form)
+	utils.Log("oauth/authorize", "Get store.ReturnUri: %v and Delete store.ReturnUri", form)
 
 	store.Delete("ReturnUri")
 	store.Save()
@@ -224,7 +223,7 @@ func authorize(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	utils.LogRequest("token", r.URL)
+	utils.LogRequest("token", r)
 	if dump {
 		_ = dumpRequest(os.Stdout, "token", r)
 	}
@@ -236,7 +235,7 @@ func token(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 }
 
 func test(w http.ResponseWriter, r *http.Request, srv *server.Server) {
-	utils.LogRequest("test", r.URL)
+	utils.LogRequest("test", r)
 	if dump {
 		_ = dumpRequest(os.Stdout, "test", r)
 	}
@@ -265,7 +264,7 @@ func addHandler(pattern string, handler func(w http.ResponseWriter, r *http.Requ
 }
 
 func redirect(w http.ResponseWriter, req, location string) {
-	utils.LogRedirect(req, "/login")
+	utils.LogRedirect(req, location)
 	w.Header().Set("Location", location)
 	w.WriteHeader(http.StatusFound)
 }

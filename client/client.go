@@ -191,8 +191,8 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	defer res.Body.Close()
 
 	decoder = json.NewDecoder(res.Body)
-	var user userInfo
-	err = decoder.Decode(user)
+	user := userInfo{}
+	err = decoder.Decode(&user)
 	if err != nil {
 		log.Println("[Error] Parse User Info ", err.Error())
 		writeTokenReviewStatusFailed(w, http.StatusUnauthorized)

@@ -19,11 +19,13 @@ build:
 	mkdir -p bin/amd64/static
 	cp ./server/static/*.html ./bin/amd64/static/
 .PHONY: run
-run:
+run: build
+	clear
 	./bin/amd64/server -d=false
 
 .PHONY: run.client
 run.client:
+	clear
 	./bin/amd64/client
 
 .PHONY: clean

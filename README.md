@@ -39,6 +39,36 @@ Hello, I'm protected!
 &state=xyz
 ```
 
+
+## OAuth2 访问流程
+
+* 资源拥有者
+* 浏览器代理（代理资源拥有者）
+* 授权客户端（第三方软件）
+* 授权服务端
+* 受保护资源
+
+### 1. 浏览器代理->第三方软件
+
+```
+http://localhost:9094
+```
+
+### 2. 第三方软件->浏览器代理（第一次重定向）
+
+```
+redirect http://localhost:9096/oauth/authorize 302
+
+http://localhost:9096/oauth/authorize?
+  client_id=222222&
+  code_challenge=Qn3Kywp0OiU4NK_AFzGPlmrcYJDJ13Abj_jdL08Ahg8=&
+  code_challenge_method=S256&
+  redirect_uri=http://localhost:9094/oauth2&
+  response_type=code&
+  scope=all&
+  state=xy
+```
+
 ### server调用UserAuthorizationHandler处理
 client->server
 /oauth/authorize 如果未设置存储store.LoggedInUserID，则返回302，且在Header中设置Location: /login
@@ -52,4 +82,6 @@ server->client
 
 client0>server
 /oauth/token
+
+
 

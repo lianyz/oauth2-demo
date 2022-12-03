@@ -7,6 +7,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -19,7 +20,30 @@ func GetRunPath() (string, error) {
 	return path, err
 }
 
+func LogURL(urlName string, uri string) {
+	decodedURL, _ := url.QueryUnescape(uri)
+	log.Println(urlName + decodedURL)
+}
+
+func LogHandler(handler string, info string) {
+	log.Println("[Handler]: " + handler + info)
+}
+
+func LogHandlerF(handler string, format string, a ...any) {
+	log.Println("[Handler]: " + handler + ". " +
+		fmt.Sprintf(format, a))
+}
+
 func LogRequest(req string, uri *url.URL) {
 	decodedURL, _ := url.QueryUnescape(uri.String())
 	log.Println("[Request]: " + req + " " + decodedURL)
+}
+
+func LogRequestF(req string, format string, a ...any) {
+	log.Println("[Request]: " + req + " " +
+		fmt.Sprintf(format, a))
+}
+
+func LogRedirect(req string, url string) {
+	log.Println("[Request]: " + req + " redirect to " + url)
 }

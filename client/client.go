@@ -24,7 +24,7 @@ import (
 
 const (
 	authServerURL = "http://localhost:9096"
-	stateCode     = "xyz"
+	state         = "xyz"
 	challengeCode = "s256example"
 	port          = "9094"
 )
@@ -44,7 +44,7 @@ var (
 )
 
 func main() {
-	http.HandleFunc("/", challengeHandler)
+	http.HandleFunc("/", defaultHandler)
 	http.HandleFunc("/oauth2", tokenHandler)
 	http.HandleFunc("/refresh", refreshHandler)
 	http.HandleFunc("/try", tryHandler)
@@ -56,13 +56,13 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func challengeHandler(w http.ResponseWriter, r *http.Request) {
-	utils.LogRequest("challenge", r.URL)
+func defaultHandler(w http.ResponseWriter, r *http.Request) {
+	utils.LogRequest("default", r.URL)
 
-	url := config.AuthCodeURL(stateCode,
+	url := config.AuthCodeURL(state,
 		oauth2.SetAuthURLParam("code_challenge", genCodeChallengeS256(challengeCode)),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"))
-	log.Printf("AuthCodeURL: %v", url)
+	utils.LogURL("AuthCodeURL: ", url)
 
 	// 向Authorization Server发送请求
 	// /oauth/authorize?client_id=222222
@@ -72,14 +72,14 @@ func challengeHandler(w http.ResponseWriter, r *http.Request) {
 	// &response_type=code
 	// &scope=all
 	// &state=xyz
-	http.Redirect(w, r, url, http.StatusFound)
+	redirect(w, r, url)
 }
 
 func tokenHandler(w http.ResponseWriter, r *http.Request) {
 	utils.LogRequest("token", r.URL)
 	r.ParseForm()
 	state := r.Form.Get("state")
-	if state != stateCode {
+	if state != state {
 		badRequestError(w, "State invalid")
 		return
 	}
@@ -101,7 +101,7 @@ func tokenHandler(w http.ResponseWriter, r *http.Request) {
 func refreshHandler(w http.ResponseWriter, r *http.Request) {
 	utils.LogRequest("refresh", r.URL)
 	if globalToken == nil {
-		redirectToChallenge(w, r)
+		redirect(w, r, "/")
 		return
 	}
 
@@ -119,7 +119,7 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 func tryHandler(w http.ResponseWriter, r *http.Request) {
 	utils.LogRequest("try", r.URL)
 	if globalToken == nil {
-		redirectToChallenge(w, r)
+		redirect(w, r, "/")
 		return
 	}
 
@@ -171,8 +171,9 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, fullFileName)
 }
 
-func redirectToChallenge(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/", http.StatusFound)
+func redirect(w http.ResponseWriter, r *http.Request, url string) {
+	utils.LogRedirect(r.URL.String(), "/login")
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func genCodeChallengeS256(s string) string {

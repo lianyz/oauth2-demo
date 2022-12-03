@@ -285,9 +285,10 @@ func test(w http.ResponseWriter, r *http.Request, srv *server.Server) {
 		"user_id":    token.GetUserID(),
 	}
 
-	e := json.NewEncoder(w)
-	e.SetIndent("", "  ")
-	e.Encode(data)
+	utils.Log("test", "user info: %v", data)
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	encoder.Encode(data)
 }
 
 func addHandler(pattern string, handler func(w http.ResponseWriter, r *http.Request, srv *server.Server), srv *server.Server) {

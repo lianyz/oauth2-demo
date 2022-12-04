@@ -68,12 +68,12 @@ cp ./webhook-config/webhook-config.json /etc/config/
 ### 7. 等待并查看k8s ApiServer是否重启成功
 
 ```
-k get po
+# k get po
 The connection to the server 192.168.34.2:6443 was refused - did you specify the right host or port?
 
 ...
 
-k get po
+# k get po
 NAME                          READY   STATUS      RESTARTS        AGE
 centos-578b69b65f-jl9ww       0/1     Running     27 (3d5h ago)   90d
 config-volume-pod             0/1     Completed   0               90d
@@ -91,11 +91,18 @@ patch-demo-68fc587f7c-mjlt8   1/1     Running     106 (10m ago)   56d
 ### 8. 使用config中配置的oauth2-user用户访问k8s
 
 ```
-k get po --user oauth2-user
+# k get po --user oauth2-user
 Error from server (Forbidden): pods is forbidden: User "lianyanze" cannot list resource "pods" in API group "" in the namespace "default"
 ```
 
 用户获取成功，但没有权限
+
+### 9. 配置用户在k8s中的权限
+
+```
+# make auth
+
+```
 
 * [Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
 * [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2/tree/master/example)

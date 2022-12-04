@@ -42,6 +42,7 @@ install.webhook:
 	cp ./webhook-config/webhook-config.json /etc/config/
 
 .PHONY: auth
+auth:
 	kubectl delete -f ./webhook-config/role.yaml
 	kubectl delete -f ./webhook-config/rolebinding-user.yaml
 	kubectl apply -f ./webhook-config/role.yaml

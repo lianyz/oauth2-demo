@@ -101,7 +101,32 @@ Error from server (Forbidden): pods is forbidden: User "lianyanze" cannot list r
 
 ```
 # make auth
+kubectl delete -f ./webhook-config/role.yaml
+role.rbac.authorization.k8s.io "example-role" deleted
+kubectl delete -f ./webhook-config/rolebinding-user.yaml
+rolebinding.rbac.authorization.k8s.io "example-rolebinding" deleted
+kubectl apply -f ./webhook-config/role.yaml
+role.rbac.authorization.k8s.io/example-role created
+kubectl apply -f ./webhook-config/rolebinding-user.yaml
+rolebinding.rbac.authorization.k8s.io/example-rolebinding created
+```
 
+### 10. 再次使用config中配置的oauth2-user用户访问k8s
+
+```
+# k get po --user oauth2-user
+NAME                          READY   STATUS      RESTARTS        AGE
+centos-578b69b65f-jl9ww       0/1     Running     27 (4d ago)     91d
+config-volume-pod             0/1     Completed   0               90d
+envoy-6958c489d9-hmj7n        1/1     Running     24 (4d ago)     87d
+hello-volume                  1/1     Running     27 (4d ago)     91d
+hostnames-7fb5498f8d-bkwvt    1/1     Running     24 (4d ago)     55d
+hostnames-7fb5498f8d-sb4ql    1/1     Running     24 (4d ago)     55d
+hostnames-7fb5498f8d-sr9kt    1/1     Running     25 (4d ago)     55d
+myapp-pod                     1/1     Running     106 (21m ago)   56d
+nginx                         2/2     Running     49 (4d ago)     62d
+patch-demo-68fc587f7c-5zlvw   1/1     Running     107 (21m ago)   56d
+patch-demo-68fc587f7c-mjlt8   1/1     Running     107 (19m ago)   56d
 ```
 
 * [Build your Own OAuth2 Server in Go: Client Credentials Grant Flow](https://medium.com/@cyantarek/build-your-own-oauth2-server-in-go-7d0f660732c3)
